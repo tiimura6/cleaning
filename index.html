@@ -1,0 +1,1259 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8" />
+  <title>清掃当番表をすぐにつくる君©Takahiro Iimura</title>
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <style>
+    body {
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Yu Gothic", sans-serif;
+      margin: 20px;
+      line-height: 1.5;
+    }
+    h1 { font-size: 1.4rem; margin-bottom: 0.4rem; }
+    fieldset {
+      border: 1px solid #ccc;
+      padding: 10px 12px;
+      margin-top: 1rem;
+    }
+    legend {
+      padding: 0 4px;
+      font-weight: bold;
+    }
+    label {
+      display: inline-block;
+      margin-top: 0.4rem;
+      font-size: 0.9rem;
+    }
+    input[type="text"],
+    select {
+      padding: 3px 4px;
+      margin-left: 4px;
+      font-size: 0.9rem;
+    }
+    button {
+      margin-top: 0.6rem;
+      padding: 4px 10px;
+      font-size: 0.9rem;
+      cursor: pointer;
+    }
+    table {
+      border-collapse: collapse;
+      margin-top: 0.6rem;
+      width: 100%;
+      max-width: 1200px;
+    }
+    th, td {
+      border: 1px solid #ccc;
+      padding: 4px 6px;
+      font-size: 0.85rem;
+      text-align: left;
+      vertical-align: top;
+    }
+    th { background: #f2f2f2; }
+    .list-table tbody tr:nth-child(odd) {
+      background: #fafafa;
+    }
+    #resultArea {
+      margin-top: 1.6rem;
+      padding: 12px;
+      border: 1px solid #999;
+      background: #fff;
+      display: inline-block;
+    }
+    .view-block { margin-top: 1.2rem; }
+    .view-title { font-weight: bold; margin-bottom: 0.3rem; }
+    #resultArea table tbody tr:nth-child(odd) {
+      background: #f9f9f9;
+    }
+
+    /* 性別ボタン */
+    .gender-cell {
+      display: flex;
+      gap: 4px;
+      align-items: center;
+    }
+    .gender-btn {
+      padding: 3px 8px;
+      font-size: 0.8rem;
+      border: 1px solid #999;
+      background: #f8f8f8;
+      cursor: pointer;
+    }
+    .gender-btn.selected-none {
+      background: #e0e0e0;
+      color: #000;
+      border-color: #999;
+    }
+    .gender-btn.selected-m {
+      background: #007bff;
+      color: #fff;
+      border-color: #007bff;
+    }
+    .gender-btn.selected-f {
+      background: #ff69b4;
+      color: #fff;
+      border-color: #ff69b4;
+    }
+
+    .weekday-group {
+      display: inline-flex;
+      flex-wrap: wrap;
+      gap: 4px;
+      margin-left: 4px;
+      font-size: 0.85rem;
+    }
+    .weekday-group label { margin: 0; }
+
+    /* 生徒情報テーブルをマルチカラム表示 */
+    #studentTable {
+      width: 100%;
+      max-width: 100%;
+    }
+    #studentTable thead { display: none; }
+    #studentTable tbody {
+      display: flex;
+      flex-wrap: wrap;
+    }
+    #studentTable tbody tr {
+      display: block;
+      width: 140px;
+      margin: 2px;
+      border: 1px solid #ddd;
+      padding: 4px;
+      box-sizing: border-box;
+      background: #fff;
+    }
+    #studentTable tbody td {
+      display: block;
+      border: none;
+      padding: 2px 0;
+    }
+    #studentTable tbody tr:nth-child(odd) {
+      background: #fff;
+    }
+
+    #genderBatchButtons {
+      display: none;
+      margin-top: 4px;
+    }
+  </style>
+</head>
+<body>
+  <h1>清掃当番表をすぐにつくる君©Takahiro Iimura</h1>
+
+  <!-- 生徒情報入力 -->
+  <fieldset>
+    <legend>1. 生徒情報の設定</legend>
+    <div>
+      <label>
+        生徒数
+        <select id="studentCountSelect">
+          <option value="">選択してください</option>
+          <!-- 1〜50 -->
+          <option value="1">1</option><option value="2">2</option>
+          <option value="3">3</option><option value="4">4</option>
+          <option value="5">5</option><option value="6">6</option>
+          <option value="7">7</option><option value="8">8</option>
+          <option value="9">9</option><option value="10">10</option>
+          <option value="11">11</option><option value="12">12</option>
+          <option value="13">13</option><option value="14">14</option>
+          <option value="15">15</option><option value="16">16</option>
+          <option value="17">17</option><option value="18">18</option>
+          <option value="19">19</option><option value="20">20</option>
+          <option value="21">21</option><option value="22">22</option>
+          <option value="23">23</option><option value="24">24</option>
+          <option value="25">25</option><option value="26">26</option>
+          <option value="27">27</option><option value="28">28</option>
+          <option value="29">29</option><option value="30">30</option>
+          <option value="31">31</option><option value="32">32</option>
+          <option value="33">33</option><option value="34">34</option>
+          <option value="35">35</option><option value="36">36</option>
+          <option value="37">37</option><option value="38">38</option>
+          <option value="39">39</option><option value="40">40</option>
+          <option value="41">41</option><option value="42">42</option>
+          <option value="43">43</option><option value="44">44</option>
+          <option value="45">45</option><option value="46">46</option>
+          <option value="47">47</option><option value="48">48</option>
+          <option value="49">49</option><option value="50">50</option>
+        </select>
+      </label>
+      <button type="button" onclick="applyStudentCount()">追加</button>
+    </div>
+    <div id="genderBatchButtons">
+      <button type="button" onclick="setAllStudentsGender('M')">すべて男子</button>
+      <button type="button" onclick="setAllStudentsGender('F')">すべて女子</button>
+      <button type="button" onclick="setAllStudentsGender('')">一括クリア</button>
+    </div>
+
+    <table class="list-table" id="studentTable">
+      <thead>
+        <tr>
+          <th>生徒番号</th>
+          <th>性別</th>
+        </tr>
+      </thead>
+      <tbody>
+        <!-- JSで行を自動生成 -->
+      </tbody>
+    </table>
+  </fieldset>
+
+  <!-- 掃除箇所入力 -->
+  <fieldset>
+    <legend>清掃箇所の設定</legend>
+
+    <!-- エリア -->
+    <div style="margin-bottom:4px;">
+      <label>
+        エリア
+        <select id="placeAreaSelect">
+          <option value="">指定なし</option>
+          <option value="高校エリア">高校エリア</option>
+          <option value="中学エリア">中学エリア</option>
+        </select>
+      </label>
+    </div>
+
+    <!-- 掃除箇所名プルダウン1のみ -->
+    <label>
+      清掃箇所(プルダウン)
+      <select id="placeNameSelect1" class="place-name-select">
+        <option value="">選択なし</option>
+      </select>
+    </label>
+    <br>
+
+    <label>
+      清掃箇所(自由入力)
+      <input type="text" id="placeNameInput" placeholder="" style="margin-left:4px; width:280px;" />
+    </label>
+    <br>
+
+    <label>
+      担当教員(任意)
+      <input type="text" id="placeTeacherInput" placeholder="" />
+    </label>
+    <br>
+    <label>
+      曜日
+      <span class="weekday-group">
+        <label><input type="checkbox" class="weekday-checkbox" value="毎日">毎日</label>
+        <label><input type="checkbox" class="weekday-checkbox" value="月">月</label>
+        <label><input type="checkbox" class="weekday-checkbox" value="火">火</label>
+        <label><input type="checkbox" class="weekday-checkbox" value="水">水</label>
+        <label><input type="checkbox" class="weekday-checkbox" value="木">木</label>
+        <label><input type="checkbox" class="weekday-checkbox" value="金">金</label>
+        <label><input type="checkbox" class="weekday-checkbox" value="土">土</label>
+      </span>
+    </label>
+    <br>
+    <button type="button" onclick="addPlace()">掃除箇所を追加</button>
+    <button type="button" onclick="addNoDutyPlace()">「掃除なし」を追加</button>
+
+    <table class="list-table" id="placeTable">
+      <thead>
+        <tr>
+          <th>エリア</th>
+          <th>清掃箇所</th>
+          <th>担当教員</th>
+          <th>制限</th>
+          <th>曜日</th>
+          <th>削除</th>
+        </tr>
+      </thead>
+      <tbody>
+        <!-- 掃除箇所行がここに追加される -->
+      </tbody>
+    </table>
+  </fieldset>
+
+  <!-- 実行ボタン -->
+  <fieldset>
+    <legend>当番表の作成</legend>
+    <button type="button" onclick="generateSchedule()">当番表を作成</button>
+    <button type="button" onclick="downloadAsImage()">当番表を画像で保存</button>
+  </fieldset>
+
+  <div id="resultArea"></div>
+
+  <!-- ▼ CSV設定ブロック（当番表の下） -->
+  <fieldset>
+    <legend>CSV設定</legend>
+
+    <!-- 生徒CSV取り込み -->
+    <div style="margin-top:4px; margin-bottom:8px;">
+      <label style="display:block; font-size:0.9rem; margin-bottom:2px;">生徒CSV</label>
+      <input type="file" id="studentCsvInput" accept=".csv" />
+      <button type="button" onclick="loadStudentsCsv()">生徒CSVを読み込む</button>
+    </div>
+
+    <hr style="margin:8px 0;">
+
+    <!-- 清掃箇所CSV -->
+    <div style="margin-top:4px; margin-bottom:4px;">
+      <button type="button" onclick="toggleCsvArea()">清掃箇所CSV設定の表示/非表示</button>
+    </div>
+    <div id="csvArea" style="display:none; margin-top:6px;">
+      <label style="display:block; font-size:0.9rem; margin-bottom:2px;">清掃箇所CSV</label>
+      <input type="file" id="placeCsvInput" accept=".csv" />
+      <button type="button" onclick="loadPlacesCsv()">CSVから読み込む</button>
+    </div>
+  </fieldset>
+  <!-- ▲ CSV設定ブロック -->
+
+  <div style="margin-top:8px; font-size:0.8rem;">© Takahiro Iimura</div>
+
+  <script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
+
+  <script>
+    // ===============================
+    // プリセット掃除箇所（高校エリアのみ）
+    // ===============================
+    const PRESET_GROUPS = [
+      {
+        label: '4号館関係',
+        items: [
+          '4号館2階女子トイレ',
+          '4号館2階女子更衣室',
+          '4号館2階男子トイレ',
+          '4号館2階男子更衣室',
+          '4号館2階ホール・ホール脇廊下',
+          '4号館海側階段(1～3階)',
+          '4号館海側階段(3～4階)',
+          '4号館3階セミナールーム',
+          '4号館3階ラーニングスペース',
+          '4号館3階女子トイレ',
+          '4号館3階男子トイレ',
+          '4号館4階セミナールーム',
+          '4号館4階ラーニングスペース',
+          '4号館4階女子トイレ',
+          '4号館4階男子トイレ',
+          '4号館山側全階段',
+          '4号館入口',
+          '特4A',
+          'ホール脇手洗い場',
+        ]
+      },
+      {
+        label: '3号館関係',
+        items: [
+          '3号館1階女子トイレ',
+          '3号館1階男子トイレ',
+          '3号館中央階段(1～2階)',
+          '3号館昇降口',
+          '3号館2階女子トイレ',
+          '3号館中央階段(2～3階)',
+          '教室・廊下・3号館2階エレベーター前',
+          '3号館2階男子トイレ',
+          '3号館海側全階段',
+          '教室・廊下・3号館3階エレベーター前',
+          '3号館中央階段（3～4階）',
+          '3号館3階女子トイレ',
+          '3号館3階男子トイレ',
+          '教室・廊下・3号館4階エレベーター前',
+          '3号館4階女子トイレ',
+          '3号館4階男子トイレ',
+          '特3A',
+          '特3B',
+          '特3C',
+        ]
+      },
+      {
+        label: '国際教育館関係',
+        items: [
+          '国際教育館1階(オーストラリア教室・アメリカ教室)',
+          '国際教育館2階 手洗い場・男子トイレ',
+          '国際教育館2階（学習室2)',
+          '国際教育館2階（学習室3）',
+          '国際教育館3階(情報教室・手洗い場・女子トイレ)',
+          '国際教育館4階(特別教室K1～K3)',
+          '国際教育館4階 手洗い場・男子トイレ',
+          '国際教育館全階段'
+        ]
+      },
+      {
+        label: 'その他',
+        items: [
+          '教室',
+          '廊下',
+          '高校音楽室・音楽室前廊下(5号館)',
+          '手洗い場',
+          '美術室・美術室前廊下',
+          '1年生職員室・職員室前廊下',
+          '2年生職員室・職員室前廊下',
+          '保健室・保健室前廊下',
+          '宗教部室前男子トイレ・2号館3階廊下(小礼拝堂～職員室4)',
+          '図書館',
+          '小礼拝堂',
+          '大教室(学習室1)',
+          '特1A',
+          '教育相談室前女子トイレ(2号館3階)',
+          '3年職員室・職員室前廊下',
+          '5号館(家庭科実習室・理科実験室)・6号館(化学室)',
+          '1号館3階男子トイレ',
+          '大会議室',
+          '進路室',
+          '1号館3階女子トイレ',
+          '1号館山側外階段',
+          '1号館玄関・昇降口',
+          '図書館前廊下～2号館出入口'
+        ]
+      }
+    ];
+
+    // ===============================
+    // 色設定
+    // ===============================
+    const PASTEL_COLORS = [
+      '#FFCDD2','#F8BBD0','#E1BEE7','#D1C4E9','#C5CAE9',
+      '#BBDEFB','#B3E5FC','#B2EBF2','#B2DFDB','#C8E6C9',
+      '#DCEDC8','#F0F4C3','#FFF9C4','#FFECB3','#FFE0B2',
+      '#FFCCBC','#D7CCC8','#F5F5F5','#CFD8DC','#E6EE9C',
+      '#FFCCFF','#E0F7FA','#FCE4EC','#E8EAF6','#F3E5F5',
+      '#EDE7F6','#E0F2F1','#F1F8E9','#FFF3E0','#FFE4E1',
+      '#E6E6FA','#F0FFF0','#FFF5EE','#F5FFFA','#F0FFFF',
+      '#FFF0F5','#FAFAD2','#F5DEB3','#E0FFFF','#F4F9FF'
+    ];
+    const placeColorMap = {};
+    function hashString(str){
+      let h=0;
+      for(let i=0;i<str.length;i++){
+        h=((h<<5)-h)+str.charCodeAt(i);
+        h|=0;
+      }
+      return h>>>0;
+    }
+    function getColorForPlaceName(name){
+      if(!name) return '#FFFFFF';
+      if(name === '掃除なし') return '#FFFFFF';
+      if(placeColorMap[name]) return placeColorMap[name];
+      const idx=hashString(name)%PASTEL_COLORS.length;
+      const c=PASTEL_COLORS[idx];
+      placeColorMap[name]=c;
+      return c;
+    }
+
+    // ===============================
+    // データ
+    // ===============================
+    let currentStudents = [];
+    const places = [];
+
+    // 生徒スナップショット
+    function snapshotStudentTable(){
+      const rows=document.querySelectorAll('#studentTable tbody tr');
+      const data=[];
+      rows.forEach(row=>{
+        const idInput=row.querySelector('.student-id');
+        const genderHidden=row.querySelector('.student-gender');
+        let selectedGender='';
+        if(genderHidden) selectedGender=genderHidden.value;
+        let idRaw='';
+        if(idInput) idRaw=idInput.value.trim();
+        data.push({idRaw,gender:selectedGender});
+      });
+      return data;
+    }
+
+    function applyStudentCount(){
+      const select=document.getElementById('studentCountSelect');
+      let n=parseInt(select.value,10);
+      if(!n){ alert('生徒数をプルダウンから選択してください。'); return; }
+      if(n<1) n=1;
+      if(n>50) n=50;
+
+      const oldData=snapshotStudentTable();
+      const tbody=document.querySelector('#studentTable tbody');
+      tbody.innerHTML='';
+
+      for(let i=1;i<=n;i++){
+        const defaultId=String(i).padStart(2,'0');
+        const prev=oldData[i-1]||{idRaw:defaultId,gender:''};
+        const idValue=prev.idRaw||defaultId;
+        const gender=prev.gender||'';
+
+        const tr=document.createElement('tr');
+        tr.innerHTML=`
+          <td>
+            <input type="text" class="student-id" maxlength="2"
+              value="${idValue}" style="width:50px;" />
+          </td>
+          <td>
+            <div class="gender-cell">
+              <button type="button" class="gender-btn" data-g="NONE" onclick="setGender(this)">未選択</button>
+              <button type="button" class="gender-btn" data-g="M" onclick="setGender(this)">男子</button>
+              <button type="button" class="gender-btn" data-g="F" onclick="setGender(this)">女子</button>
+              <input type="hidden" class="student-gender" value="${gender}">
+            </div>
+          </td>
+        `;
+        tbody.appendChild(tr);
+
+        const cell=tr.querySelector('.gender-cell');
+        const hidden=cell.querySelector('.student-gender');
+        const btnNone=cell.querySelector('.gender-btn[data-g="NONE"]');
+        const btnM=cell.querySelector('.gender-btn[data-g="M"]');
+        const btnF=cell.querySelector('.gender-btn[data-g="F"]');
+        if(hidden.value==='M'){
+          btnM.classList.add('selected-m');
+        }else if(hidden.value==='F'){
+          btnF.classList.add('selected-f');
+        }else{
+          hidden.value='';
+          if(btnNone) btnNone.classList.add('selected-none');
+        }
+      }
+
+      const batchDiv=document.getElementById('genderBatchButtons');
+      if(batchDiv) batchDiv.style.display='block';
+    }
+
+    function setGender(btn){
+      const cell=btn.closest('.gender-cell');
+      if(!cell) return;
+      const hidden=cell.querySelector('.student-gender');
+      const buttons=cell.querySelectorAll('.gender-btn');
+      buttons.forEach(b=>b.classList.remove('selected-none','selected-m','selected-f'));
+      const g=btn.getAttribute('data-g');
+      if(g==='NONE'){
+        hidden.value='';
+        btn.classList.add('selected-none');
+      }else if(g==='M'){
+        hidden.value='M';
+        btn.classList.add('selected-m');
+      }else if(g==='F'){
+        hidden.value='F';
+        btn.classList.add('selected-f');
+      }
+    }
+
+    function setAllStudentsGender(g){
+      const rows=document.querySelectorAll('#studentTable tbody tr');
+      rows.forEach(row=>{
+        const cell=row.querySelector('.gender-cell');
+        if(!cell) return;
+        const hidden=cell.querySelector('.student-gender');
+        const buttons=cell.querySelectorAll('.gender-btn');
+        buttons.forEach(b=>b.classList.remove('selected-none','selected-m','selected-f'));
+        if(g==='M'){
+          hidden.value='M';
+          const btn=cell.querySelector('.gender-btn[data-g="M"]');
+          if(btn) btn.classList.add('selected-m');
+        }else if(g==='F'){
+          hidden.value='F';
+          const btn=cell.querySelector('.gender-btn[data-g="F"]');
+          if(btn) btn.classList.add('selected-f');
+        }else{
+          hidden.value='';
+          const btn=cell.querySelector('.gender-btn[data-g="NONE"]');
+          if(btn) btn.classList.add('selected-none');
+        }
+      });
+    }
+
+    function collectStudentsFromTable(){
+      const rows=document.querySelectorAll('#studentTable tbody tr');
+      const students=[];
+      const usedIds=new Set();
+      for(const row of rows){
+        const idInput=row.querySelector('.student-id');
+        const genderHidden=row.querySelector('.student-gender');
+        if(!idInput||!genderHidden) continue;
+        const idRaw=idInput.value.trim();
+        const gender=genderHidden.value;
+        if(!idRaw && !gender) continue;
+
+        if(!idRaw){
+          throw '生徒番号が未入力の行があります。';
+        }
+        if(!/^[0-9]{1,2}$/.test(idRaw)){
+          throw '生徒番号は1〜2桁の数字で入力してください。エラーのある値: ' + idRaw;
+        }
+        const num=parseInt(idRaw,10);
+        if(num<=0){
+          throw '生徒番号は1以上の数字にしてください。エラーのある値: ' + idRaw;
+        }
+        const id=String(num).padStart(2,'0');
+        if(usedIds.has(id)){
+          throw '同じ生徒番号が重複しています: ' + id;
+        }
+        usedIds.add(id);
+        students.push({id,gender});
+      }
+      return students;
+    }
+
+    // ===============================
+    // 掃除箇所追加（性別制限は名称から自動判定）
+    // ===============================
+    function inferGenderLimitFromName(name){
+      const hasFemale = name.includes('女子');
+      const hasMale   = name.includes('男子');
+      if(hasFemale && !hasMale) return 'F';
+      if(hasMale   && !hasFemale) return 'M';
+      return 'ANY';
+    }
+
+    function addPlace(){
+      const areaSelect=document.getElementById('placeAreaSelect');
+      const nameInput=document.getElementById('placeNameInput');
+      const teacherInput=document.getElementById('placeTeacherInput');
+      const sel1=document.getElementById('placeNameSelect1');
+
+      const area=areaSelect.value.trim();
+      let name=nameInput.value.trim();
+      const teacher=teacherInput.value.trim();
+
+      if(!name && sel1 && sel1.value){
+        name = sel1.value;
+      }
+
+      const weekdayChecks=document.querySelectorAll('.weekday-checkbox');
+      let weekdays=[];
+      weekdayChecks.forEach(cb=>{ if(cb.checked) weekdays.push(cb.value); });
+
+      if(!name){
+        alert('清掃箇所をプルダウンで選択するか、自由入力してください。');
+        return;
+      }
+      if(weekdays.length===0){
+        alert('曜日を少なくとも1つ選択してください。');
+        return;
+      }
+      if(weekdays.includes('毎日') && weekdays.length>1){
+        weekdays=['毎日'];
+      }
+
+      const genderLimit = inferGenderLimitFromName(name);
+
+      places.push({ area, name, teacher, genderLimit, weekdays });
+
+      renderPlaceTable();
+      resetWeekdayToEveryday();
+
+      if(sel1) sel1.value='';
+      nameInput.value='';
+    }
+
+    function addNoDutyPlace(){
+      places.push({
+        area:'',
+        name:'掃除なし',
+        teacher:'',
+        genderLimit:'ANY',
+        weekdays:['なし']
+      });
+      renderPlaceTable();
+    }
+
+    function removePlace(index){
+      if(index<0 || index>=places.length) return;
+      places.splice(index,1);
+      renderPlaceTable();
+    }
+
+    function renderPlaceTable(){
+      const tbody=document.querySelector('#placeTable tbody');
+      tbody.innerHTML='';
+      places.forEach((p,idx)=>{
+        const genderLabel =
+          p.genderLimit==='M'?'男子のみ':
+          p.genderLimit==='F'?'女子のみ':'どちらでも可';
+        const weekdayLabel = p.weekdays && p.weekdays.length
+          ? p.weekdays.join('・') : '';
+        const tr=document.createElement('tr');
+        tr.innerHTML = `
+          <td>${p.area || ''}</td>
+          <td>${p.name}</td>
+          <td>${p.teacher || ''}</td>
+          <td>${genderLabel}</td>
+          <td>${weekdayLabel}</td>
+          <td><button type="button" onclick="removePlace(${idx})">削除</button></td>
+        `;
+        tbody.appendChild(tr);
+      });
+    }
+
+    // エリアごとにプレセット（高校エリアのみ表示）
+    function populatePlaceNameSelects(area){
+      const sel=document.getElementById('placeNameSelect1');
+      if(!sel) return;
+
+      // いったんクリア
+      sel.innerHTML = '';
+      const defaultOpt = document.createElement('option');
+      defaultOpt.value = '';
+      defaultOpt.textContent = '選択なし';
+      sel.appendChild(defaultOpt);
+
+      // 高校エリア以外ではプレセットを表示しない
+      if(area !== '高校エリア') return;
+
+      PRESET_GROUPS.forEach(group=>{
+        const og=document.createElement('optgroup');
+        og.label=group.label;
+        group.items.forEach(name=>{
+          const opt=document.createElement('option');
+          opt.value=name;
+          opt.textContent=name;
+          og.appendChild(opt);
+        });
+        sel.appendChild(og);
+      });
+    }
+
+    function updatePlaceNameInputFromSelect1(){
+      const sel=document.getElementById('placeNameSelect1');
+      const nameInput=document.getElementById('placeNameInput');
+      if(!sel || !nameInput) return;
+      nameInput.value = sel.value || '';
+    }
+
+    // 「毎日」がオンなら月〜土すべてON、オフなら月〜土すべてOFF（初期状態も全ON）
+    function resetWeekdayToEveryday(){
+      const weekdayChecks=document.querySelectorAll('.weekday-checkbox');
+      weekdayChecks.forEach(cb=>{
+        cb.checked = true;
+      });
+    }
+
+    // ===============================
+    // CSV表示トグル（清掃箇所）
+    // ===============================
+    function toggleCsvArea(){
+      const div = document.getElementById('csvArea');
+      if(!div) return;
+      if(div.style.display === 'none' || div.style.display === ''){
+        div.style.display = 'block';
+      }else{
+        div.style.display = 'none';
+      }
+    }
+
+    // ===============================
+    // CSV読み込み共通
+    // ===============================
+    function simpleCsvParse(text){
+      const lines = text.split(/\r?\n/).filter(l => l.trim() !== '');
+      return lines.map(line => {
+        const cells = line.split(',').map(c => c.trim());
+        return cells;
+      });
+    }
+
+    // ===============================
+    // 掃除箇所CSV読み込み
+    // ===============================
+    function parseWeekdaysFromCsv(str){
+      if(!str) return ['毎日'];
+      let s = str.replace(/\s/g,'');
+      if(!s) return ['毎日'];
+      if(s === '毎日') return ['毎日'];
+      const arr = s.split(/[・,、/]/).map(v => v.trim()).filter(v => v);
+      if(arr.length === 0) return ['毎日'];
+      if(arr.includes('毎日')) return ['毎日'];
+      return arr;
+    }
+
+    function importPlacesFromCsv(text){
+      const rows = simpleCsvParse(text);
+      if(rows.length < 2) throw '有効なデータ行がありません。';
+
+      const header = rows[0].map(h => h.toLowerCase());
+      const findIndex = (candidates) => {
+        for(const key of candidates){
+          const idx = header.indexOf(key.toLowerCase());
+          if(idx !== -1) return idx;
+        }
+        return -1;
+      };
+
+      const idxArea = findIndex(['area','エリア','area_name','エリア名']);
+      const idxName = findIndex(['name','掃除箇所','掃除場所','place','場所']);
+      const idxTeacher = findIndex(['teacher','担当教員','担当','teacher_name']);
+      const idxWeekdays = findIndex(['weekdays','曜日','days']);
+
+      if(idxName === -1){
+        throw 'ヘッダー行に name（または 掃除箇所/掃除場所 等）の列が見つかりません。';
+      }
+
+      let importedCount = 0;
+
+      for(let i=1;i<rows.length;i++){
+        const r = rows[i];
+        if(r.length === 0) continue;
+        const name = (r[idxName] || '').trim();
+        if(!name) continue;
+
+        const area = idxArea >= 0 ? (r[idxArea] || '').trim() : '';
+        const teacher = idxTeacher >= 0 ? (r[idxTeacher] || '').trim() : '';
+        const weekdaysStr = idxWeekdays >= 0 ? (r[idxWeekdays] || '').trim() : '';
+        const weekdays = parseWeekdaysFromCsv(weekdaysStr);
+
+        const genderLimit = inferGenderLimitFromName(name);
+
+        places.push({
+          area,
+          name,
+          teacher,
+          genderLimit,
+          weekdays
+        });
+        importedCount++;
+      }
+
+      if(importedCount === 0){
+        throw 'name列に有効な清掃箇所名がありません。';
+      }
+
+      renderPlaceTable();
+    }
+
+    function loadPlacesCsv(){
+      const input = document.getElementById('placeCsvInput');
+      if(!input || !input.files || input.files.length === 0){
+        alert('清掃箇所CSVファイルを選択してください。');
+        return;
+      }
+      const file = input.files[0];
+      const reader = new FileReader();
+      reader.onload = function(e){
+        const text = e.target.result;
+        try{
+          importPlacesFromCsv(text);
+          alert('CSVから清掃箇所を読み込みました。');
+        }catch(err){
+          alert('清掃箇所CSVの読み込みに失敗しました: ' + err);
+        }
+      };
+      reader.onerror = function(){
+        alert('清掃箇所CSVファイルの読み込みに失敗しました。');
+      };
+      reader.readAsText(file, 'UTF-8');
+    }
+
+    // ===============================
+    // 生徒CSV読み込み
+    // ===============================
+    function normalizeGenderFromCsv(str){
+      if(!str) return '';
+      const s = str.trim().toLowerCase();
+      if(s === 'm' || s === '男' || s === '男子') return 'M';
+      if(s === 'f' || s === '女' || s === '女子') return 'F';
+      return '';
+    }
+
+    function importStudentsFromCsv(text){
+      const rows = simpleCsvParse(text);
+      if(rows.length < 2) throw '有効な生徒データ行がありません。';
+
+      const header = rows[0].map(h => h.toLowerCase());
+      const findIndex = (candidates) => {
+        for(const key of candidates){
+          const idx = header.indexOf(key.toLowerCase());
+          if(idx !== -1) return idx;
+        }
+        return -1;
+      };
+
+      const idxId = findIndex(['id','student_id','番号','出席番号']);
+      const idxGender = findIndex(['gender','sex','性別']);
+
+      if(idxId === -1){
+        throw 'ヘッダー行に id（または 番号/出席番号 等）の列が見つかりません。';
+      }
+
+      const students = [];
+      const usedIds = new Set();
+
+      for(let i=1;i<rows.length;i++){
+        const r = rows[i];
+        if(!r || r.length === 0) continue;
+        let idRaw = (r[idxId] || '').trim();
+        if(!idRaw) continue;
+
+        if(!/^[0-9]{1,2}$/.test(idRaw)){
+          throw '生徒番号(id)は1〜2桁の数字で入力してください。エラー行: ' + (i+1);
+        }
+        const num = parseInt(idRaw,10);
+        if(num <= 0){
+          throw '生徒番号(id)は1以上の数字にしてください。エラー行: ' + (i+1);
+        }
+        const id = String(num).padStart(2,'0');
+        if(usedIds.has(id)){
+          throw 'CSV内で生徒番号が重複しています: ' + id;
+        }
+        usedIds.add(id);
+
+        let genderCode = '';
+        if(idxGender >= 0){
+          genderCode = normalizeGenderFromCsv(r[idxGender] || '');
+        }
+
+        students.push({id,gender: genderCode});
+      }
+
+      if(students.length === 0){
+        throw '有効な生徒行がありません。';
+      }
+      if(students.length > 50){
+        throw '生徒数が50名を超えています（' + students.length + '名）。上限50名までです。';
+      }
+
+      const tbody = document.querySelector('#studentTable tbody');
+      tbody.innerHTML = '';
+
+      students.forEach(s => {
+        const tr = document.createElement('tr');
+        tr.innerHTML = `
+          <td>
+            <input type="text" class="student-id" maxlength="2"
+              value="${s.id}" style="width:50px;" />
+          </td>
+          <td>
+            <div class="gender-cell">
+              <button type="button" class="gender-btn" data-g="NONE" onclick="setGender(this)">未選択</button>
+              <button type="button" class="gender-btn" data-g="M" onclick="setGender(this)">男子</button>
+              <button type="button" class="gender-btn" data-g="F" onclick="setGender(this)">女子</button>
+              <input type="hidden" class="student-gender" value="${s.gender}">
+            </div>
+          </td>
+        `;
+        tbody.appendChild(tr);
+
+        const cell = tr.querySelector('.gender-cell');
+        const hidden = cell.querySelector('.student-gender');
+        const btnNone = cell.querySelector('.gender-btn[data-g="NONE"]');
+        const btnM    = cell.querySelector('.gender-btn[data-g="M"]');
+        const btnF    = cell.querySelector('.gender-btn[data-g="F"]');
+
+        if(hidden.value === 'M'){
+          btnM.classList.add('selected-m');
+        }else if(hidden.value === 'F'){
+          btnF.classList.add('selected-f');
+        }else{
+          hidden.value='';
+          if(btnNone) btnNone.classList.add('selected-none');
+        }
+      });
+
+      const sel = document.getElementById('studentCountSelect');
+      if(sel){
+        sel.value = String(students.length);
+      }
+
+      const batchDiv=document.getElementById('genderBatchButtons');
+      if(batchDiv) batchDiv.style.display='block';
+    }
+
+    function loadStudentsCsv(){
+      const input = document.getElementById('studentCsvInput');
+      if(!input || !input.files || input.files.length === 0){
+        alert('生徒CSVファイルを選択してください。');
+        return;
+      }
+      const file = input.files[0];
+      const reader = new FileReader();
+      reader.onload = function(e){
+        const text = e.target.result;
+        try{
+          importStudentsFromCsv(text);
+          alert('生徒CSVを読み込みました。');
+        }catch(err){
+          alert('生徒CSVの読み込みに失敗しました: ' + err);
+        }
+      };
+      reader.onerror = function(){
+        alert('生徒CSVファイルの読み込みに失敗しました。');
+      };
+      reader.readAsText(file, 'UTF-8');
+    }
+
+    // ===============================
+    // 割り当てロジック（複数人 / 均等 / 性別優先）
+    // ===============================
+    function genderOk(studentGender, placeGenderLimit){
+      if(placeGenderLimit==='ANY') return true;
+      return studentGender===placeGenderLimit;
+    }
+
+    function createAssignments(periodCount, students){
+      const nPeriods = periodCount;
+      const nPlaces  = places.length;
+      const assignments = [];
+      if (students.length === 0 || nPlaces === 0) return assignments;
+
+      const nStudents = students.length;
+
+      const totalAssigned = {};
+      const perPlaceAssigned = {};
+      places.forEach((_, pIdx) => { perPlaceAssigned[pIdx] = {}; });
+      students.forEach(s => { totalAssigned[s.id] = 0; });
+
+      function distinctPlacesCount(studentId){
+        let cnt = 0;
+        for(const pIdxStr in perPlaceAssigned){
+          const pIdx = Number(pIdxStr);
+          if(perPlaceAssigned[pIdx][studentId] && perPlaceAssigned[pIdx][studentId] > 0){
+            cnt++;
+          }
+        }
+        return cnt;
+      }
+
+      function assignOnePeriod(periodIdx){
+        const periodAssignment = [];
+        for (let i = 0; i < nPlaces; i++) {
+          periodAssignment[i] = [];
+        }
+        const usedThisPeriod = new Set();
+
+        const baseCap = Math.floor(nStudents / nPlaces);
+        const extra   = nStudents % nPlaces;
+
+        const genderFirst = [];
+        const anyLater    = [];
+        for(let pIdx=0; pIdx<nPlaces; pIdx++){
+          const gl = places[pIdx].genderLimit;
+          if(gl === 'M' || gl === 'F') genderFirst.push(pIdx);
+          else anyLater.push(pIdx);
+        }
+        const placeOrder = genderFirst.concat(anyLater);
+
+        placeOrder.forEach((pIdx)=>{
+          const place = places[pIdx];
+
+          const rotatedIndex = (pIdx - periodIdx + nPlaces) % nPlaces;
+          const capacity = baseCap + (rotatedIndex < extra ? 1 : 0);
+
+          for(let slot = 0; slot < capacity; slot++){
+            const candidates = [];
+
+            students.forEach(s => {
+              if(usedThisPeriod.has(s.id)) return;
+              if(!genderOk(s.gender, place.genderLimit)) return;
+
+              const prevHere = perPlaceAssigned[pIdx][s.id] || 0;
+              const total    = totalAssigned[s.id] || 0;
+              const dCount   = distinctPlacesCount(s.id);
+
+              candidates.push({ s, prevHere, total, dCount });
+            });
+
+            if(candidates.length === 0){
+              return;
+            }
+
+            candidates.sort((a, b) => {
+              if(a.prevHere !== b.prevHere) return a.prevHere - b.prevHere;
+              if(a.total    !== b.total   ) return a.total    - b.total;
+              if(a.dCount   !== b.dCount  ) return a.dCount   - b.dCount;
+              return a.s.id.localeCompare(b.s.id);
+            });
+
+            const chosen = candidates[0].s;
+            periodAssignment[pIdx].push(chosen.id);
+            usedThisPeriod.add(chosen.id);
+            totalAssigned[chosen.id] = (totalAssigned[chosen.id] || 0) + 1;
+            perPlaceAssigned[pIdx][chosen.id] =
+              (perPlaceAssigned[pIdx][chosen.id] || 0) + 1;
+
+            if(usedThisPeriod.size >= nStudents){
+              break;
+            }
+          }
+        });
+
+        return periodAssignment;
+      }
+
+      for (let p = 0; p < nPeriods; p++) {
+        assignments.push(assignOnePeriod(p));
+      }
+      return assignments;
+    }
+
+    // 生徒別ビュー
+    function buildStudentViewTable(assignments,periodCount,students){
+      const table=document.createElement('table');
+
+      const thead=document.createElement('thead');
+      const trHead=document.createElement('tr');
+      const th0=document.createElement('th');
+      th0.textContent='生徒番号';
+      trHead.appendChild(th0);
+      for(let p=0;p<periodCount;p++){
+        const th=document.createElement('th');
+        th.textContent=`ローテ${p+1}`;
+        trHead.appendChild(th);
+      }
+      thead.appendChild(trHead);
+      table.appendChild(thead);
+
+      function getPlaceNameFor(studentId,periodIdx){
+        const periodAssignment=assignments[periodIdx] || [];
+        for(let pIdx=0;pIdx<periodAssignment.length;pIdx++){
+          const placeAssignment=periodAssignment[pIdx] || [];
+          if(placeAssignment.includes(studentId)){
+            const pl=places[pIdx];
+            return pl ? pl.name : '';
+          }
+        }
+        return '';
+      }
+
+      const sortedStudents=[...students].sort((a,b)=>{
+        const placeA=getPlaceNameFor(a.id,0) || '';
+        const placeB=getPlaceNameFor(b.id,0) || '';
+        if(placeA!==placeB) return placeA.localeCompare(placeB,'ja');
+        return a.id.localeCompare(b.id);
+      });
+
+      const tbody=document.createElement('tbody');
+
+      sortedStudents.forEach(s=>{
+        const tr=document.createElement('tr');
+        const tdId=document.createElement('td');
+        if(s.gender==='M'){
+          tdId.textContent=`${s.id}(男子)`;
+        }else if(s.gender==='F'){
+          tdId.textContent=`${s.id}(女子)`;
+        }else{
+          tdId.textContent=s.id;
+        }
+        tr.appendChild(tdId);
+
+        for(let period=0;period<periodCount;period++){
+          const td=document.createElement('td');
+          const periodAssignment=assignments[period]||[];
+          const assignedPlaceNames=[];
+
+          for(let pIdx=0;pIdx<periodAssignment.length;pIdx++){
+            const placeAssignment=periodAssignment[pIdx]||[];
+            if(placeAssignment.includes(s.id)){
+              const pl=places[pIdx];
+              if(pl && pl.name) assignedPlaceNames.push(pl.name);
+            }
+          }
+
+          const uniqueNames=[...new Set(assignedPlaceNames)];
+          const label=uniqueNames.join(' / ');
+          td.textContent=label;
+          td.style.whiteSpace='pre-line';
+
+          if(uniqueNames.length===1){
+            const name=uniqueNames[0];
+            td.style.backgroundColor=getColorForPlaceName(name);
+          }else if(uniqueNames.length>1){
+            td.style.backgroundColor='#EEEEEE';
+          }else{
+            td.style.backgroundColor='#FFFFFF';
+          }
+
+          tr.appendChild(td);
+        }
+
+        tbody.appendChild(tr);
+      });
+
+      table.appendChild(tbody);
+      return table;
+    }
+
+    function generateSchedule(){
+      let students;
+      try{
+        students=collectStudentsFromTable();
+      }catch(e){
+        alert(e);
+        return;
+      }
+      if(students.length===0){
+        alert('生徒情報が入力されていません。');
+        return;
+      }
+      if(students.length>50){
+        alert('生徒数は最大50名までです。現在: '+students.length+'名');
+        return;
+      }
+      if(places.length===0){
+        alert('清掃箇所が登録されていません。');
+        return;
+      }
+
+      if(students.length < places.length){
+        alert(
+          '生徒数が清掃箇所数より少ないため、\n' +
+          '条件を満たす当番表を作成できません。\n\n' +
+          '生徒数 ≧ 清掃箇所数 となるように調整してください。'
+        );
+        return;
+      }
+
+      const periodCount=places.length;
+      currentStudents=students;
+      const assignments=createAssignments(periodCount,currentStudents);
+
+      const resultArea=document.getElementById('resultArea');
+      resultArea.innerHTML='';
+
+      const sv=document.createElement('div');
+      sv.className='view-block';
+      sv.innerHTML='<div class="view-title">当番表</div>';
+      sv.appendChild(buildStudentViewTable(assignments,periodCount,currentStudents));
+      resultArea.appendChild(sv);
+    }
+
+    function downloadAsImage(){
+      const target=document.getElementById('resultArea');
+      if(!target || !target.innerHTML.trim()){
+        alert('先に当番表を作成してください。');
+        return;
+      }
+      html2canvas(target).then(canvas=>{
+        const link=document.createElement('a');
+        link.href=canvas.toDataURL('image/png');
+        link.download='seisou_touban.png';
+        link.click();
+      });
+    }
+
+    document.addEventListener('DOMContentLoaded',()=>{
+      const areaSel=document.getElementById('placeAreaSelect');
+      if(areaSel){
+        areaSel.value='高校エリア';
+        populatePlaceNameSelects(areaSel.value);
+
+        areaSel.addEventListener('change', () => {
+          populatePlaceNameSelects(areaSel.value);
+          const nameInput=document.getElementById('placeNameInput');
+          if(nameInput) nameInput.value='';
+          const sel1=document.getElementById('placeNameSelect1');
+          if(sel1) sel1.value='';
+        });
+      }else{
+        populatePlaceNameSelects('高校エリア');
+      }
+
+      resetWeekdayToEveryday();
+
+      const weekdayChecks = document.querySelectorAll('.weekday-checkbox');
+      const everyCb = Array.from(weekdayChecks).find(cb => cb.value === '毎日');
+      if (everyCb) {
+        everyCb.addEventListener('change', () => {
+          const checked = everyCb.checked;
+          weekdayChecks.forEach(cb => {
+            if (cb.value !== '毎日') {
+              cb.checked = checked;
+            }
+          });
+        });
+      }
+
+      const sel1=document.getElementById('placeNameSelect1');
+      if(sel1) sel1.addEventListener('change',updatePlaceNameInputFromSelect1);
+    });
+  </script>
+</body>
+</html>
