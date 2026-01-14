@@ -67,7 +67,7 @@
       background: #f9f9f9;
     }
 
-    /* 性別ボタン */
+    /* 性別ボタン（生徒） */
     .gender-cell {
       display: flex;
       gap: 4px;
@@ -180,6 +180,7 @@
       </label>
       <button type="button" onclick="applyStudentCount()">追加</button>
     </div>
+
     <div id="genderBatchButtons">
       <button type="button" onclick="setAllStudentsGender('M')">すべて男子</button>
       <button type="button" onclick="setAllStudentsGender('F')">すべて女子</button>
@@ -235,6 +236,19 @@
       <input type="text" id="placeTeacherInput" placeholder="" />
     </label>
     <br>
+
+    <!-- ★追加：性別制限 -->
+    <label>
+      性別制限
+      <select id="placeGenderLimitSelect" style="margin-left:4px;">
+        <option value="AUTO">自動（名称から判定）</option>
+        <option value="ANY">どちらでも可</option>
+        <option value="M">男子のみ</option>
+        <option value="F">女子のみ</option>
+      </select>
+    </label>
+    <br>
+
     <label>
       曜日
       <span class="weekday-group">
@@ -248,6 +262,7 @@
       </span>
     </label>
     <br>
+
     <button type="button" onclick="addPlace()">掃除箇所を追加</button>
     <button type="button" onclick="addNoDutyPlace()">「掃除なし」を追加</button>
 
@@ -276,31 +291,6 @@
   </fieldset>
 
   <div id="resultArea"></div>
-
-  <!-- ▼ CSV設定ブロック（当番表の下） -->
-  <fieldset>
-    <legend>CSV設定</legend>
-
-    <!-- 生徒CSV取り込み -->
-    <div style="margin-top:4px; margin-bottom:8px;">
-      <label style="display:block; font-size:0.9rem; margin-bottom:2px;">生徒CSV</label>
-      <input type="file" id="studentCsvInput" accept=".csv" />
-      <button type="button" onclick="loadStudentsCsv()">生徒CSVを読み込む</button>
-    </div>
-
-    <hr style="margin:8px 0;">
-
-    <!-- 清掃箇所CSV -->
-    <div style="margin-top:4px; margin-bottom:4px;">
-      <button type="button" onclick="toggleCsvArea()">清掃箇所CSV設定の表示/非表示</button>
-    </div>
-    <div id="csvArea" style="display:none; margin-top:6px;">
-      <label style="display:block; font-size:0.9rem; margin-bottom:2px;">清掃箇所CSV</label>
-      <input type="file" id="placeCsvInput" accept=".csv" />
-      <button type="button" onclick="loadPlacesCsv()">CSVから読み込む</button>
-    </div>
-  </fieldset>
-  <!-- ▲ CSV設定ブロック -->
 
   <div style="margin-top:8px; font-size:0.8rem;">© Takahiro Iimura</div>
 
@@ -585,7 +575,7 @@
     }
 
     // ===============================
-    // 掃除箇所追加（性別制限は名称から自動判定）
+    // 掃除箇所追加（性別制限：手動＋自動）
     // ===============================
     function inferGenderLimitFromName(name){
       const hasFemale = name.includes('女子');
@@ -600,6 +590,7 @@
       const nameInput=document.getElementById('placeNameInput');
       const teacherInput=document.getElementById('placeTeacherInput');
       const sel1=document.getElementById('placeNameSelect1');
+      const genderSel=document.getElementById('placeGenderLimitSelect');
 
       const area=areaSelect.value.trim();
       let name=nameInput.value.trim();
@@ -625,7 +616,18 @@
         weekdays=['毎日'];
       }
 
-      const genderLimit = inferGenderLimitFromName(name);
+      // ★ 性別制限：UI指定を優先。AUTOなら名称から自動判定
+      let genderLimit = 'ANY';
+      const selected = genderSel ? genderSel.value : 'AUTO';
+      if(selected === 'AUTO'){
+        genderLimit = inferGenderLimitFromName(name);
+      }else if(selected === 'M'){
+        genderLimit = 'M';
+      }else if(selected === 'F'){
+        genderLimit = 'F';
+      }else{
+        genderLimit = 'ANY';
+      }
 
       places.push({ area, name, teacher, genderLimit, weekdays });
 
@@ -634,6 +636,7 @@
 
       if(sel1) sel1.value='';
       nameInput.value='';
+      if(genderSel) genderSel.value='AUTO';
     }
 
     function addNoDutyPlace(){
@@ -716,258 +719,6 @@
       weekdayChecks.forEach(cb=>{
         cb.checked = true;
       });
-    }
-
-    // ===============================
-    // CSV表示トグル（清掃箇所）
-    // ===============================
-    function toggleCsvArea(){
-      const div = document.getElementById('csvArea');
-      if(!div) return;
-      if(div.style.display === 'none' || div.style.display === ''){
-        div.style.display = 'block';
-      }else{
-        div.style.display = 'none';
-      }
-    }
-
-    // ===============================
-    // CSV読み込み共通
-    // ===============================
-    function simpleCsvParse(text){
-      const lines = text.split(/\r?\n/).filter(l => l.trim() !== '');
-      return lines.map(line => {
-        const cells = line.split(',').map(c => c.trim());
-        return cells;
-      });
-    }
-
-    // ===============================
-    // 掃除箇所CSV読み込み
-    // ===============================
-    function parseWeekdaysFromCsv(str){
-      if(!str) return ['毎日'];
-      let s = str.replace(/\s/g,'');
-      if(!s) return ['毎日'];
-      if(s === '毎日') return ['毎日'];
-      const arr = s.split(/[・,、/]/).map(v => v.trim()).filter(v => v);
-      if(arr.length === 0) return ['毎日'];
-      if(arr.includes('毎日')) return ['毎日'];
-      return arr;
-    }
-
-    function importPlacesFromCsv(text){
-      const rows = simpleCsvParse(text);
-      if(rows.length < 2) throw '有効なデータ行がありません。';
-
-      const header = rows[0].map(h => h.toLowerCase());
-      const findIndex = (candidates) => {
-        for(const key of candidates){
-          const idx = header.indexOf(key.toLowerCase());
-          if(idx !== -1) return idx;
-        }
-        return -1;
-      };
-
-      const idxArea = findIndex(['area','エリア','area_name','エリア名']);
-      const idxName = findIndex(['name','掃除箇所','掃除場所','place','場所']);
-      const idxTeacher = findIndex(['teacher','担当教員','担当','teacher_name']);
-      const idxWeekdays = findIndex(['weekdays','曜日','days']);
-
-      if(idxName === -1){
-        throw 'ヘッダー行に name（または 掃除箇所/掃除場所 等）の列が見つかりません。';
-      }
-
-      let importedCount = 0;
-
-      for(let i=1;i<rows.length;i++){
-        const r = rows[i];
-        if(r.length === 0) continue;
-        const name = (r[idxName] || '').trim();
-        if(!name) continue;
-
-        const area = idxArea >= 0 ? (r[idxArea] || '').trim() : '';
-        const teacher = idxTeacher >= 0 ? (r[idxTeacher] || '').trim() : '';
-        const weekdaysStr = idxWeekdays >= 0 ? (r[idxWeekdays] || '').trim() : '';
-        const weekdays = parseWeekdaysFromCsv(weekdaysStr);
-
-        const genderLimit = inferGenderLimitFromName(name);
-
-        places.push({
-          area,
-          name,
-          teacher,
-          genderLimit,
-          weekdays
-        });
-        importedCount++;
-      }
-
-      if(importedCount === 0){
-        throw 'name列に有効な清掃箇所名がありません。';
-      }
-
-      renderPlaceTable();
-    }
-
-    function loadPlacesCsv(){
-      const input = document.getElementById('placeCsvInput');
-      if(!input || !input.files || input.files.length === 0){
-        alert('清掃箇所CSVファイルを選択してください。');
-        return;
-      }
-      const file = input.files[0];
-      const reader = new FileReader();
-      reader.onload = function(e){
-        const text = e.target.result;
-        try{
-          importPlacesFromCsv(text);
-          alert('CSVから清掃箇所を読み込みました。');
-        }catch(err){
-          alert('清掃箇所CSVの読み込みに失敗しました: ' + err);
-        }
-      };
-      reader.onerror = function(){
-        alert('清掃箇所CSVファイルの読み込みに失敗しました。');
-      };
-      reader.readAsText(file, 'UTF-8');
-    }
-
-    // ===============================
-    // 生徒CSV読み込み
-    // ===============================
-    function normalizeGenderFromCsv(str){
-      if(!str) return '';
-      const s = str.trim().toLowerCase();
-      if(s === 'm' || s === '男' || s === '男子') return 'M';
-      if(s === 'f' || s === '女' || s === '女子') return 'F';
-      return '';
-    }
-
-    function importStudentsFromCsv(text){
-      const rows = simpleCsvParse(text);
-      if(rows.length < 2) throw '有効な生徒データ行がありません。';
-
-      const header = rows[0].map(h => h.toLowerCase());
-      const findIndex = (candidates) => {
-        for(const key of candidates){
-          const idx = header.indexOf(key.toLowerCase());
-          if(idx !== -1) return idx;
-        }
-        return -1;
-      };
-
-      const idxId = findIndex(['id','student_id','番号','出席番号']);
-      const idxGender = findIndex(['gender','sex','性別']);
-
-      if(idxId === -1){
-        throw 'ヘッダー行に id（または 番号/出席番号 等）の列が見つかりません。';
-      }
-
-      const students = [];
-      const usedIds = new Set();
-
-      for(let i=1;i<rows.length;i++){
-        const r = rows[i];
-        if(!r || r.length === 0) continue;
-        let idRaw = (r[idxId] || '').trim();
-        if(!idRaw) continue;
-
-        if(!/^[0-9]{1,2}$/.test(idRaw)){
-          throw '生徒番号(id)は1〜2桁の数字で入力してください。エラー行: ' + (i+1);
-        }
-        const num = parseInt(idRaw,10);
-        if(num <= 0){
-          throw '生徒番号(id)は1以上の数字にしてください。エラー行: ' + (i+1);
-        }
-        const id = String(num).padStart(2,'0');
-        if(usedIds.has(id)){
-          throw 'CSV内で生徒番号が重複しています: ' + id;
-        }
-        usedIds.add(id);
-
-        let genderCode = '';
-        if(idxGender >= 0){
-          genderCode = normalizeGenderFromCsv(r[idxGender] || '');
-        }
-
-        students.push({id,gender: genderCode});
-      }
-
-      if(students.length === 0){
-        throw '有効な生徒行がありません。';
-      }
-      if(students.length > 50){
-        throw '生徒数が50名を超えています（' + students.length + '名）。上限50名までです。';
-      }
-
-      const tbody = document.querySelector('#studentTable tbody');
-      tbody.innerHTML = '';
-
-      students.forEach(s => {
-        const tr = document.createElement('tr');
-        tr.innerHTML = `
-          <td>
-            <input type="text" class="student-id" maxlength="2"
-              value="${s.id}" style="width:50px;" />
-          </td>
-          <td>
-            <div class="gender-cell">
-              <button type="button" class="gender-btn" data-g="NONE" onclick="setGender(this)">未選択</button>
-              <button type="button" class="gender-btn" data-g="M" onclick="setGender(this)">男子</button>
-              <button type="button" class="gender-btn" data-g="F" onclick="setGender(this)">女子</button>
-              <input type="hidden" class="student-gender" value="${s.gender}">
-            </div>
-          </td>
-        `;
-        tbody.appendChild(tr);
-
-        const cell = tr.querySelector('.gender-cell');
-        const hidden = cell.querySelector('.student-gender');
-        const btnNone = cell.querySelector('.gender-btn[data-g="NONE"]');
-        const btnM    = cell.querySelector('.gender-btn[data-g="M"]');
-        const btnF    = cell.querySelector('.gender-btn[data-g="F"]');
-
-        if(hidden.value === 'M'){
-          btnM.classList.add('selected-m');
-        }else if(hidden.value === 'F'){
-          btnF.classList.add('selected-f');
-        }else{
-          hidden.value='';
-          if(btnNone) btnNone.classList.add('selected-none');
-        }
-      });
-
-      const sel = document.getElementById('studentCountSelect');
-      if(sel){
-        sel.value = String(students.length);
-      }
-
-      const batchDiv=document.getElementById('genderBatchButtons');
-      if(batchDiv) batchDiv.style.display='block';
-    }
-
-    function loadStudentsCsv(){
-      const input = document.getElementById('studentCsvInput');
-      if(!input || !input.files || input.files.length === 0){
-        alert('生徒CSVファイルを選択してください。');
-        return;
-      }
-      const file = input.files[0];
-      const reader = new FileReader();
-      reader.onload = function(e){
-        const text = e.target.result;
-        try{
-          importStudentsFromCsv(text);
-          alert('生徒CSVを読み込みました。');
-        }catch(err){
-          alert('生徒CSVの読み込みに失敗しました: ' + err);
-        }
-      };
-      reader.onerror = function(){
-        alert('生徒CSVファイルの読み込みに失敗しました。');
-      };
-      reader.readAsText(file, 'UTF-8');
     }
 
     // ===============================
